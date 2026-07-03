@@ -1,4 +1,15 @@
+from ultralytics import YOLO
+from ultralytics.engine.results import Results
+
+
 class Predictor:
+    def __init__(self, model_to_weights_path: dict[str, str]):
+        self.available_models: dict[str, YOLO] = {}
+        for model_name, weights_path in model_to_weights_path.items():
+            self.available_models[model_name] = YOLO(weights_path)
+
+        self.model = next(iter(self.available_models.values()))
+
     def __call__(
         self, input_filenames: str | list[str], output_filenames: str | list[str]
     ):
@@ -7,8 +18,8 @@ class Predictor:
             input_filenames = [input_filenames]
             output_filenames = [output_filenames]
 
-        for input_filename, output_filename in zip(
-            input_filenames, output_filenames, strict=True
-        ):
-            with open(input_filename, "rb") as inp, open(output_filename, "wb") as outp:
-                outp.write(inp.read())
+        results: list[Results] = self.model(input_filenames)
+        for result, output_filename in zip(results, output_filenames, strict=True):
+            result.show()
+
+            result.save(filename=output_filename)

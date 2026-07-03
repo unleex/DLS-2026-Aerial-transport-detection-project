@@ -9,10 +9,11 @@ from schemas import QueryRequest
 
 Base.metadata.create_all(engine)
 
-app = FastAPI()
-predictor = Predictor()
-
 OUTPUT_FILE_POSTFIX = "_processed"
+MODELS = {"small": "runs/detect/train-5/weights/best.pt"}
+
+app = FastAPI()
+predictor = Predictor(MODELS)
 
 
 @app.get("/")
