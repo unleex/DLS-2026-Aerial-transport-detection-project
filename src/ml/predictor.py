@@ -26,9 +26,7 @@ class Predictor:
         )
 
         for result, output_filename in zip(results, output_filenames, strict=True):
-            result.show()
-
-            result.save(filename=output_filename)
+            result.save(filename=output_filename, line_width=1)
         if len(results) == 1:
             return results[0]
         return results

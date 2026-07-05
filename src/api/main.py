@@ -10,7 +10,7 @@ from api.schemas import QueryRequest
 Base.metadata.create_all(engine)
 
 OUTPUT_FILE_POSTFIX = "_processed"
-AVAILABLE_MODELS = {"Pro": "runs/detect/train-10/weights/best.pt"}
+AVAILABLE_MODELS = {"Pro": "weights/Fast.pt", "Fast": "weights/Fast.pt"}
 
 app = FastAPI()
 predictor = Predictor(AVAILABLE_MODELS)
@@ -36,7 +36,7 @@ def predict(request: QueryRequest):
         model=request.model,
         classes=request.classes,
     )
-    detected = [result.names[idx] for idx in result.boxes.cls]
+    detected = [result.names[idx.item()] for idx in result.boxes.cls]
 
     db.add(row)
     db.commit()
@@ -49,27 +49,3 @@ def predict(request: QueryRequest):
         "output_filename": row.output_filename,
         "detected": detected,
     }
-
-
-@app.get("/history")
-def global_history():
-
-    db = SessionLocal()
-
-    rows = db.query(Query).all()
-
-    db.close()
-
-    return rows
-
-
-@app.get("/history/{username}")
-def user_history(username: str):
-
-    db = SessionLocal()
-
-    rows = db.query(Query).filter(Query.username == username).all()
-
-    db.close()
-
-    return rows

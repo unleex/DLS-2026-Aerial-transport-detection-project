@@ -12,7 +12,7 @@ for model_name in MODELS:
     model = YOLO(model_name, verbose=True)
     model.train(
         data=YOLO_YAML_PATH,
-        epochs=100,
+        epochs=0.01,
         device=DEVICE,
         name=model_name.rstrip(".pt") + "_high_res",
         exist_ok=True,
