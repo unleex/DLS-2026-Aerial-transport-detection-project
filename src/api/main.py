@@ -1,4 +1,4 @@
-from ml.predictor import Predictor
+from ml.predictor import Predictor, AVAILABLE_MODELS
 
 from fastapi import FastAPI
 from sqlalchemy.orm import Session
@@ -9,8 +9,7 @@ from api.schemas import QueryRequest
 
 Base.metadata.create_all(engine)
 
-OUTPUT_FILE_POSTFIX = "_processed"
-AVAILABLE_MODELS = {"Pro": "weights/Fast.pt", "Fast": "weights/Fast.pt"}
+OUTPUT_FILE_POSTFIX = "_processed.png"
 
 app = FastAPI()
 predictor = Predictor(AVAILABLE_MODELS)

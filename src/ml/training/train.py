@@ -2,23 +2,27 @@ from pathlib import Path
 from ultralytics import YOLO
 
 MODELS = [
-    "yolo26x.pt",
-    "yolo26s.pt",
+    "runs/detect/yolo26x_high_res/weights/best.pt",
+    "runs/detect/yolo26s_high_res/weights/best.pt",
 ]
+MODEL_NAMES = ["Pro", "Fast"]
+WEIGHT_DIR = Path("weights")
+WEIGHT_DIR.mkdir(exist_ok=True)
 DEVICE = "cuda"
 BATCH_SIZE = 64
 YOLO_YAML_PATH = Path("dataset/VisDrone.yaml")
-for model_name in MODELS:
-    model = YOLO(model_name, verbose=True)
+for pretrained_model, model_name in zip(MODELS, MODEL_NAMES):
+    model = YOLO(pretrained_model, verbose=True)
     model.train(
         data=YOLO_YAML_PATH,
-        epochs=0.01,
+        epochs=100,
         device=DEVICE,
-        name=model_name.rstrip(".pt") + "_high_res",
+        name=pretrained_model.rstrip(".pt") + "_high_res",
         exist_ok=True,
         workers=32,
         cos_lr=True,
         imgsz=1024,
         batch=BATCH_SIZE,
-        # resume=True,
+        resume=True,
     )
+    model.save(str(WEIGHT_DIR / model_name) + ".pt")

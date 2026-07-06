@@ -1,3 +1,4 @@
+from collections import Counter
 import json
 from pathlib import Path
 from PIL import Image
@@ -7,9 +8,9 @@ from streamlit_image_zoom import image_zoom
 import numpy as np
 from ultralytics.utils.plotting import Annotator, colors
 
-API = "http://127.0.0.1:8001"
+API = "http://127.0.0.1:8000"
 
-st.title("Aerial object detection")
+st.title("Aerial image analysis AI")
 
 TMP_DIR = Path("tmp")
 TMP_DIR.mkdir(exist_ok=True)
@@ -87,15 +88,18 @@ if st.button("Run!"):
             f.write(file.getvalue())
 
         with st.spinner(f"Processing {file.name}..."):
-            response = requests.post(
+            r = requests.post(
                 f"{API}/predict",
                 json={
                     "filename": str(savepath),
                     "model": selected_model,
                 },
-            ).json()
-
+            )
+            if not r.ok:
+                print(r)
+                st.error("Internal error occured, try again later")
         # Parse detection results
+        response = r.json()
         raw_results = response["results"]
         detections = (
             json.loads(raw_results) if isinstance(raw_results, str) else raw_results
@@ -115,37 +119,38 @@ if st.button("Run!"):
 
 # Post-processing and rendering. Triggers dynamically on sidebar change
 if st.session_state.results:
-    display_results = []
+    results = []
+    detection_counts: list[Counter] = []
 
     # Select classes based on the pills
     for res in st.session_state.results:
         filtered = [d for d in res["detections"] if d["name"] in selected_classes]
-        display_results.append(
+        results.append(
             {
                 "original_name": res["original_name"],
                 "output_filename": res["output_filename"],
                 "detections": filtered,
             }
         )
+        detection_counts.append(Counter([d["name"] for d in filtered]))
 
     if sorting_order == "Object count":
-        display_results.sort(
-            key=lambda x: sum(
-                1 for d in x["detections"] if d["name"] in objects_to_sort_by
+        results.sort(
+            key=lambda result: sum(
+                1 for d in result["detections"] if d["name"] in objects_to_sort_by
             ),
             reverse=True,
         )
 
-    for res in display_results:
+    for res, counts in zip(results, detection_counts, strict=True):
         with st.expander(label=res["original_name"], expanded=True):
-            # 1. Load the clean, unannotated original image
+            # Load the original, unannotated image
             original_img_path = TMP_DIR / res["original_name"]
             img_np = np.array(Image.open(original_img_path))
 
-            # 2. Initialize the native Ultralytics plotting tool
             annotator = Annotator(img_np, line_width=1)
 
-            # 3. Draw only the boxes that survived the frontend filter
+            # Draw the boxes for user-selected classes
             for d in res["detections"]:
                 box = d["box"]
                 xyxy = [box["x1"], box["y1"], box["x2"], box["y2"]]
@@ -156,7 +161,10 @@ if st.session_state.results:
                     label=f"{d['name']} {d['confidence']:.2f}",
                     color=colors(class_idx, bgr=True),
                 )
-
-            # 4. Convert back to PIL and pass straight into the zoom component
             annotated_img = Image.fromarray(annotator.result())
-            image_zoom(annotated_img, mode="both", keep_resolution=True)
+
+            col_img, col_counts = st.columns([3, 1])
+            with col_img:
+                image_zoom(annotated_img, mode="both", keep_resolution=True)
+            with col_counts:
+                st.table(dict(counts))

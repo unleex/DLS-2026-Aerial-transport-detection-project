@@ -1,6 +1,8 @@
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
 
+AVAILABLE_MODELS = {"Pro": "weights/Fast.pt", "Fast": "weights/Fast.pt"}
+
 
 class Predictor:
     def __init__(self, model_to_weights_path: dict[str, str]):
