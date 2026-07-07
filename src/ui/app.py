@@ -12,6 +12,7 @@ API = "http://127.0.0.1:8000"
 
 st.title("Aerial image analysis AI")
 
+# TODO: clear tmp files
 TMP_DIR = Path("tmp")
 TMP_DIR.mkdir(exist_ok=True)
 LABELS = {
@@ -95,9 +96,9 @@ if st.button("Run!"):
                     "model": selected_model,
                 },
             )
-            if not r.ok:
-                print(r)
-                st.error("Internal error occured, try again later")
+        if not r.ok:
+            print(r)
+            st.error("Internal error occured, try again later")
         # Parse detection results
         response = r.json()
         raw_results = response["results"]
@@ -135,12 +136,16 @@ if st.session_state.results:
         detection_counts.append(Counter([d["name"] for d in filtered]))
 
     if sorting_order == "Object count":
-        results.sort(
-            key=lambda result: sum(
+
+        def result_sorter(result):
+            return sum(
                 1 for d in result["detections"] if d["name"] in objects_to_sort_by
-            ),
-            reverse=True,
-        )
+            )
+
+        # Arrange detection_counts in the same order results are sorted in
+        to_sort = list(zip(results, detection_counts, strict=True))
+        to_sort.sort(key=lambda item: result_sorter(item[0]), reverse=True)
+        results, detection_counts = zip(*to_sort)
 
     for res, counts in zip(results, detection_counts, strict=True):
         with st.expander(label=res["original_name"], expanded=True):

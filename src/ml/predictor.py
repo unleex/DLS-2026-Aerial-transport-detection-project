@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
 
-AVAILABLE_MODELS = {"Pro": "weights/Fast.pt", "Fast": "weights/Fast.pt"}
+AVAILABLE_MODELS = {"Pro": "weights/Pro.pt", "Fast": "weights/Fast.pt"}
 
 
 class Predictor:
