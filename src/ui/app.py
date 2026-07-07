@@ -10,7 +10,7 @@ from streamlit_image_zoom import image_zoom
 import numpy as np
 from ultralytics.utils.plotting import Annotator, colors
 
-API = "http://127.0.0.1:8000"
+API = "http://0.0.0.0:8000"
 
 st.title("Aerial image analysis AI")
 
