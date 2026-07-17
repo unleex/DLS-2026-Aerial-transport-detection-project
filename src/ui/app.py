@@ -1,3 +1,5 @@
+import io
+import zipfile
 import detection_stats
 from collections import Counter
 import json
@@ -8,14 +10,34 @@ import streamlit as st
 from streamlit_image_zoom import image_zoom
 import numpy as np
 from ultralytics.utils.plotting import Annotator, colors
+import uuid
+import shutil
+import atexit
 
 API = "http://0.0.0.0:8000"
 
 st.title("Aerial image analysis AI")
 
-# TODO: clear tmp files
-TMP_DIR = Path("tmp")
-TMP_DIR.mkdir(exist_ok=True)
+# Create a unique subfolder for this specific tab session
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
+
+TMP_DIR = Path("tmp") / st.session_state.session_id
+
+
+@st.cache_resource
+def register_cleanup():
+    # Clear the tmp directory on startup
+    if TMP_DIR.exists():
+        shutil.rmtree(TMP_DIR)
+    TMP_DIR.mkdir(parents=True, exist_ok=True)
+    # Cleanup on a graceful shutdown (Ctrl+C, SIGTERM)
+    atexit.register(lambda: shutil.rmtree("tmp", ignore_errors=True))
+
+
+register_cleanup()
+
+
 LABELS = {
     "pedestrian": 0,
     "people": 1,
@@ -39,6 +61,9 @@ if "results" not in st.session_state:
 # File upload
 def clear_uploader():
     st.session_state.uploader_key += 1
+    st.session_state.results = []
+    shutil.rmtree(TMP_DIR)
+    TMP_DIR.mkdir()
 
 
 with st.container():
