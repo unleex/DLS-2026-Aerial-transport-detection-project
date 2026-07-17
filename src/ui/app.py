@@ -1,5 +1,4 @@
-import pandas as pd
-import matplotlib.pyplot as plt
+import detection_stats
 from collections import Counter
 import json
 from pathlib import Path
@@ -150,24 +149,10 @@ if st.session_state.results:
         to_sort.sort(key=lambda item: result_sorter(item[0]), reverse=True)
         results, detection_counts = zip(*to_sort)
 
-    # Gather and display statistics
-    mean_counts = pd.DataFrame(columns=["count"])
-    for counts in detection_counts:
-        new_counts = pd.DataFrame({"count": counts.values()}, index=counts.keys())
-        concatenated = pd.concat([mean_counts, new_counts])
-        mean_counts = (
-            pd.DataFrame(detection_counts).fillna(0).mean().to_frame(name="count")
-        )
-    total = mean_counts["count"].sum()
-    ax = mean_counts.plot.pie(
-        "count",
-        autopct=lambda p: f"{int(round(p * total / 100))}",
-        title="Average number of objects found per image",
-        radius=0.7,
-    )
-    ax.legend(loc=2, prop={"size": 6})
+    # # Gather and display statistics
     with st.expander(label="🧮 Statistics", expanded=False):
-        st.pyplot(ax.figure)
+        st.pyplot(detection_stats.mean_detection_pie(detection_counts))
+        st.pyplot(detection_stats.detection_trend_line(detection_counts))
 
     # Display annotated images
     for res, counts in zip(results, detection_counts, strict=True):
@@ -190,9 +175,10 @@ if st.session_state.results:
                     color=colors(class_idx, bgr=True),
                 )
             annotated_img = Image.fromarray(annotator.result())
-
             col_img, col_counts = st.columns([3, 1])
             with col_img:
-                image_zoom(annotated_img, mode="both", keep_resolution=True)
+                image_zoom(
+                    annotated_img, mode="both", keep_resolution=True, zoom_factor=4
+                )
             with col_counts:
                 st.table(dict(counts))
