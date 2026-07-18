@@ -183,8 +183,8 @@ if st.session_state.results:
 
     # # Gather and display statistics
     with st.expander(label="🧮 Statistics", expanded=False):
-        st.pyplot(detection_stats.mean_detection_pie(detection_counts))
-        st.pyplot(detection_stats.detection_trend_line(detection_counts))
+        for stat in detection_stats.stats_to_show:
+            st.pyplot(stat(detection_counts))
 
     # Display annotated images
     for res, counts in zip(results, detection_counts, strict=True):

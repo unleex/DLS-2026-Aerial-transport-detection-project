@@ -45,3 +45,9 @@ def detection_trend_line(detection_counts: list[Counter]):
     ax.set_xlabel("image no.")
     ax.set_ylabel("object count")
     return ax.figure
+
+
+stats_to_show = [
+    mean_detection_pie,
+    detection_trend_line,
+]
